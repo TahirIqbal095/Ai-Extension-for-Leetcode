@@ -4,6 +4,7 @@ import Content from "@/content/Content";
 
 const root = document.createElement("div");
 root.id = "content-container";
+document.body.className = "relative";
 document.body.append(root);
 
 createRoot(root).render(
