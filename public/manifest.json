@@ -11,5 +11,12 @@
     "background": {
         "service_worker": "src/background.js",
         "type": "module"
-    }
+    },
+
+    "content_scripts": [
+        {
+            "js": ["src/content.tsx"],
+            "matches": ["https://leetcode.com/problems/*"]
+        }
+    ]
 }
