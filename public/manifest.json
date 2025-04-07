@@ -5,10 +5,11 @@
     "description": "A chrome extension for leetcode to solve the problem by giving the tailored hints",
 
     "action": {
-        "default_popup": "index.html"
+        "default_popup": "popup.html"
     },
 
     "background": {
-        "service_worker": "src/background.js"
+        "service_worker": "src/background.js",
+        "type": "module"
     }
 }
