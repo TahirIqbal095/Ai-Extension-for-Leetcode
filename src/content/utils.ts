@@ -5,3 +5,7 @@ export function extractCode(htmlCodeContent: NodeListOf<Element>) {
 
     return code;
 }
+
+export function extractTextContent(element: Element): string {
+    return element.textContent ?? "";
+}
