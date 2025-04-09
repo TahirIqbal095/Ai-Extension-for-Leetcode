@@ -1,58 +1,74 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot } from "lucide-react";
 import { extractCode, extractTextContent } from "./utils";
 import { SYSTEM_PROMPT } from "@/constants/prompt";
-import { useEffect, useState } from "react";
+import { generateResponseFromGemini } from "@/models/gemini_2.0";
 
 export default function Content() {
-    const [code, setCode] = useState<string>("");
-    const [language, setLanguage] = useState<string>("");
+    const [code, setCode] = useState("");
+    const language = useRef("unknown");
 
+    // Extract code and language after 5 seconds
     useEffect(() => {
-        /**
-         * extracting the language and the code written by the user
-         * after 5-sec of delay
-         */
         const timeoutId = setTimeout(() => {
-            const userCurrentCode = document.querySelectorAll(
+            const codeNodes = document.querySelectorAll(
                 ".lines-content .view-lines .view-line"
             );
-            const languageButton = document.querySelector(
+            const langButton = document.querySelector(
                 "button.rounded.items-center.whitespace-nowrap.focus\\:outline-none.inline-flex.bg-transparent.dark\\:bg-dark-transparent.text-text-secondary.dark\\:text-text-secondary.active\\:bg-transparent.dark\\:active\\:bg-dark-transparent.hover\\:bg-fill-secondary.dark\\:hover\\:bg-fill-secondary.px-1\\.5.py-0\\.5.text-sm.font-normal.group"
             );
 
-            if (languageButton) {
-                setLanguage(extractTextContent(languageButton));
-            }
-            setCode(extractCode(userCurrentCode));
+            language.current = langButton
+                ? extractTextContent(langButton)
+                : "unknown";
+            setCode(extractCode(codeNodes));
         }, 5000);
 
         return () => clearTimeout(timeoutId);
     }, []);
 
-    // extracting the problem-statement
-    let PROBLEM_STATEMENT = "unknown";
-    const currentProblem = document
-        .querySelector("meta[name=description]")
-        ?.getAttribute("content");
+    // Extract problem statement
+    const problemStatement = useMemo(() => {
+        return (
+            document
+                .querySelector("meta[name=description]")
+                ?.getAttribute("content") || "unknown"
+        );
+    }, []);
 
-    if (currentProblem) {
-        PROBLEM_STATEMENT = currentProblem;
-    }
+    // Update the system prompt with dynamic context
+    const systemPromptWithContext = useMemo(() => {
+        const escape = (str: string) => str.replace(/\$/g, "$$$$");
+        return SYSTEM_PROMPT.replace(
+            /{{problem_statement}}/gi,
+            escape(problemStatement)
+        )
+            .replace(/{{user_code}}/gi, escape(code))
+            .replace(/{{programming_language}}/gi, escape(language.current));
+    }, [problemStatement, code, language]);
 
-    // updating the prompt
-    const systemPromptWithContext = SYSTEM_PROMPT.replace(
-        /{{problem_statement}}}/gi, // replaces all problems_statement's (Case-insensitive)
-        PROBLEM_STATEMENT
-    )
-        .replace(/{{user_code}}}/gi, code)
-        .replace(/{{programming_language}}}/gi, language);
-
-    console.log(systemPromptWithContext);
+    // Handle AI Response
+    const handleAiResponse = async () => {
+        try {
+            const response = await generateResponseFromGemini(
+                systemPromptWithContext
+            );
+            console.log(response);
+        } catch (error) {
+            console.error("Failed to generate response:", error);
+        }
+    };
 
     return (
         <div className="absolute right-6 bottom-6">
-            <div className="bg-white p-2 rounded">
-                <Bot color="#000000" />
+            <div className="bg-white p-2 rounded shadow-md">
+                <button
+                    onClick={handleAiResponse}
+                    className="cursor-pointer"
+                    title="Ask AI"
+                >
+                    <Bot color="#000000" />
+                </button>
             </div>
         </div>
     );
