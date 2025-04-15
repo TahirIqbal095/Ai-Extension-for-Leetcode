@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bot } from "lucide-react";
+import { BotMessageSquare, Send } from "lucide-react";
 import { extractCode, extractTextContent } from "./utils";
 import { SYSTEM_PROMPT } from "@/constants/prompt";
-import { generateResponseFromGemini } from "@/models/gemini_2.0";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Content() {
-    const [code, setCode] = useState("");
+    const [code, setCode] = useState<string>("");
+    const [open, setOpen] = useState<boolean>(false);
     const language = useRef("unknown");
 
     // Extract code and language after 5 seconds
@@ -47,29 +48,92 @@ export default function Content() {
             .replace(/{{programming_language}}/gi, escape(language.current));
     }, [problemStatement, code, language]);
 
+    console.log("System Prompt with Context:", systemPromptWithContext);
+
     // Handle AI Response
-    const handleAiResponse = async () => {
-        try {
-            const response = await generateResponseFromGemini(
-                systemPromptWithContext
-            );
-            console.log(response);
-        } catch (error) {
-            console.error("Failed to generate response:", error);
-        }
-    };
+    // const handleAiResponse = async () => {
+    //     try {
+    //         const response = await generateResponseFromGemini(
+    //             systemPromptWithContext
+    //         );
+    //         console.log(response);
+    //     } catch (error) {
+    //         console.error("Failed to generate response:", error);
+    //     }
+    // };
 
     return (
-        <div className="absolute right-6 bottom-6">
-            <div className="bg-white p-2 rounded shadow-md">
+        <>
+            <div
+                className="z-50"
+                style={{
+                    position: "fixed",
+                    bottom: "28px",
+                    right: "28px",
+                }}
+            >
+                {open && <ChatWindow open={open} setOpen={setOpen} />}
+
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setOpen(!open)}
+                        className="cursor-pointer bg-[#FFFFFF] p-2 rounded transition hover:scale-110"
+                        title="Ask AI"
+                    >
+                        <BotMessageSquare color="#000000" className="p-0" />
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
+type ChatWindowProps = {
+    open: boolean;
+    setOpen: (open: boolean) => void;
+};
+
+export function ChatWindow({ open, setOpen }: ChatWindowProps) {
+    const [value, setValue] = useState<string>("");
+    return (
+        <div
+            style={{
+                width: "360px",
+                height: "500px",
+            }}
+            className="flex flex-col bg-white mb-4 rounded-lg shadow-lg p-2"
+        >
+            <div className="flex justify-end">
                 <button
-                    onClick={handleAiResponse}
-                    className="cursor-pointer"
-                    title="Ask AI"
+                    onClick={() => setOpen(!open)}
+                    className="content-btn"
+                    title="Close"
                 >
-                    <Bot color="#000000" />
+                    close
                 </button>
             </div>
+
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (value.trim().length === 0) return;
+                    setValue("");
+                }}
+                className="relative mt-auto"
+            >
+                <Textarea
+                    style={{
+                        color: "#404040",
+                        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
+                    }}
+                    placeholder="Ask for help..."
+                    onChange={(e) => setValue(e.target.value)}
+                />
+
+                <button type="submit" className="absolute right-3 top-3">
+                    <Send color="#525252" />
+                </button>
+            </form>
         </div>
     );
 }
