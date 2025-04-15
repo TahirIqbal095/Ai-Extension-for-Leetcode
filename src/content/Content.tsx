@@ -3,11 +3,17 @@ import { BotMessageSquare, Send } from "lucide-react";
 import { extractCode, extractTextContent } from "./utils";
 import { SYSTEM_PROMPT } from "@/constants/prompt";
 import { Textarea } from "@/components/ui/textarea";
+import { generateResponseFromGemini } from "@/models/gemini_2.0";
 
 export default function Content() {
     const [code, setCode] = useState<string>("");
+    const [userPrompt, setUserPrompt] = useState<string>("");
     const [open, setOpen] = useState<boolean>(false);
+    const [aiResponse, setAiResponse] = useState<string | undefined>("");
     const language = useRef("unknown");
+
+    console.log("re-render");
+    console.log(userPrompt);
 
     // Extract code and language after 5 seconds
     useEffect(() => {
@@ -44,23 +50,22 @@ export default function Content() {
             /{{problem_statement}}/gi,
             escape(problemStatement)
         )
+            .replace(/{{user_prompt}}/gi, userPrompt)
             .replace(/{{user_code}}/gi, escape(code))
             .replace(/{{programming_language}}/gi, escape(language.current));
-    }, [problemStatement, code, language]);
-
-    console.log("System Prompt with Context:", systemPromptWithContext);
+    }, [problemStatement, code, language, userPrompt]);
 
     // Handle AI Response
-    // const handleAiResponse = async () => {
-    //     try {
-    //         const response = await generateResponseFromGemini(
-    //             systemPromptWithContext
-    //         );
-    //         console.log(response);
-    //     } catch (error) {
-    //         console.error("Failed to generate response:", error);
-    //     }
-    // };
+    const handleAiResponse = async () => {
+        try {
+            const response = await generateResponseFromGemini(
+                systemPromptWithContext
+            );
+            setAiResponse(response);
+        } catch (error) {
+            console.error("Failed to generate response:", error);
+        }
+    };
 
     return (
         <>
@@ -72,7 +77,15 @@ export default function Content() {
                     right: "28px",
                 }}
             >
-                {open && <ChatWindow open={open} setOpen={setOpen} />}
+                {open && (
+                    <ChatWindow
+                        open={open}
+                        setOpen={setOpen}
+                        setUserPrompt={setUserPrompt}
+                        handleAiResponse={handleAiResponse}
+                        response={aiResponse}
+                    />
+                )}
 
                 <div className="flex justify-end">
                     <button
@@ -91,10 +104,29 @@ export default function Content() {
 type ChatWindowProps = {
     open: boolean;
     setOpen: (open: boolean) => void;
+    setUserPrompt: (prompt: string) => void;
+    handleAiResponse: () => Promise<void>;
+    response: string | undefined;
 };
 
-export function ChatWindow({ open, setOpen }: ChatWindowProps) {
+export function ChatWindow({
+    open,
+    setOpen,
+    setUserPrompt,
+    handleAiResponse,
+    response,
+}: ChatWindowProps) {
     const [value, setValue] = useState<string>("");
+
+    // debouncing the 'setUserPrompt'
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setUserPrompt(value);
+        }, 900);
+
+        return () => clearTimeout(timeoutId);
+    }, [value, setUserPrompt]);
+
     return (
         <div
             style={{
@@ -113,11 +145,12 @@ export function ChatWindow({ open, setOpen }: ChatWindowProps) {
                 </button>
             </div>
 
+            <div>{response}</div>
+
             <form
                 onSubmit={(event) => {
                     event.preventDefault();
-                    if (value.trim().length === 0) return;
-                    setValue("");
+                    handleAiResponse();
                 }}
                 className="relative mt-auto"
             >
