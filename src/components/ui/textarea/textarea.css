@@ -2,6 +2,7 @@
 
 .content-textarea {
     width: 100%;
+    color: #525252;
     max-height: 200px;
     resize: none;
     border: 1px solid transparent;
