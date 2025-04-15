@@ -1,0 +1,65 @@
+/* Icon CSS */
+.icon-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.main-icon {
+    cursor: pointer;
+    display: flex;
+    padding: 10px;
+    border-radius: 50%;
+    background-color: #ffffff !important;
+}
+
+.main-icon:hover {
+    scale: 1.05;
+    transition: all 0.3s ease;
+}
+
+/* Content CSS */
+.content-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+.content-form {
+    position: relative;
+    margin-top: auto;
+}
+
+.content-navbar {
+    display: flex;
+    justify-content: flex-end;
+    padding-bottom: 12px;
+}
+
+.content-max-btn {
+    background-color: #ffffff;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.content-max-btn:hover {
+    background-color: #f5f5f5;
+}
+
+.content-send-btn {
+    position: absolute;
+    bottom: 11px;
+    right: 8px;
+    background-color: rgb(0, 87, 255) !important;
+    padding: 10px;
+    border-radius: 50%;
+}
+
+.content-chat {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    color: #262626;
+}

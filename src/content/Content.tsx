@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BotMessageSquare, Send } from "lucide-react";
+import { SendHorizontal, Maximize2, Minimize2, Bot } from "lucide-react";
 import { extractCode, extractTextContent } from "./utils";
 import { SYSTEM_PROMPT } from "@/constants/prompt";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea/Textarea";
 import { generateResponseFromGemini } from "@/models/gemini_2.0";
 
 export default function Content() {
@@ -45,14 +45,13 @@ export default function Content() {
 
     // Update the system prompt with dynamic context
     const systemPromptWithContext = useMemo(() => {
-        const escape = (str: string) => str.replace(/\$/g, "$$$$");
         return SYSTEM_PROMPT.replace(
             /{{problem_statement}}/gi,
-            escape(problemStatement)
+            problemStatement
         )
             .replace(/{{user_prompt}}/gi, userPrompt)
-            .replace(/{{user_code}}/gi, escape(code))
-            .replace(/{{programming_language}}/gi, escape(language.current));
+            .replace(/{{user_code}}/gi, code)
+            .replace(/{{programming_language}}/gi, language.current);
     }, [problemStatement, code, language, userPrompt]);
 
     // Handle AI Response
@@ -79,21 +78,19 @@ export default function Content() {
             >
                 {open && (
                     <ChatWindow
-                        open={open}
-                        setOpen={setOpen}
                         setUserPrompt={setUserPrompt}
                         handleAiResponse={handleAiResponse}
                         response={aiResponse}
                     />
                 )}
 
-                <div className="flex justify-end">
+                <div className="icon-container">
                     <button
                         onClick={() => setOpen(!open)}
-                        className="cursor-pointer bg-[#FFFFFF] p-2 rounded transition hover:scale-110"
                         title="Ask AI"
+                        className="main-icon"
                     >
-                        <BotMessageSquare color="#000000" className="p-0" />
+                        <Bot size={16} color="#000000" />
                     </button>
                 </div>
             </div>
@@ -102,20 +99,17 @@ export default function Content() {
 }
 
 type ChatWindowProps = {
-    open: boolean;
-    setOpen: (open: boolean) => void;
     setUserPrompt: (prompt: string) => void;
     handleAiResponse: () => Promise<void>;
     response: string | undefined;
 };
 
 export function ChatWindow({
-    open,
-    setOpen,
     setUserPrompt,
     handleAiResponse,
     response,
 }: ChatWindowProps) {
+    const [maximize, setMaximize] = useState<boolean>(false);
     const [value, setValue] = useState<string>("");
 
     // debouncing the 'setUserPrompt'
@@ -130,41 +124,42 @@ export function ChatWindow({
     return (
         <div
             style={{
-                width: "360px",
+                width: maximize ? "600px" : "360px",
                 height: "500px",
             }}
-            className="flex flex-col bg-white mb-4 rounded-lg shadow-lg p-2"
+            className="content-container"
         >
-            <div className="flex justify-end">
+            <div className="content-navbar">
                 <button
-                    onClick={() => setOpen(!open)}
-                    className="content-btn"
-                    title="Close"
+                    onClick={() => setMaximize(!maximize)}
+                    className="content-max-btn"
+                    title={maximize ? "Minimize" : "Maximize"}
                 >
-                    close
+                    {maximize ? (
+                        <Minimize2 size={12} color="#262626" />
+                    ) : (
+                        <Maximize2 size={12} color="#262626" />
+                    )}
                 </button>
             </div>
 
-            <div>{response}</div>
+            <div className="content-chat">{response}</div>
 
             <form
+                action="submit"
                 onSubmit={(event) => {
                     event.preventDefault();
                     handleAiResponse();
                 }}
-                className="relative mt-auto"
+                className="content-form"
             >
                 <Textarea
-                    style={{
-                        color: "#404040",
-                        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
-                    }}
                     placeholder="Ask for help..."
                     onChange={(e) => setValue(e.target.value)}
                 />
 
-                <button type="submit" className="absolute right-3 top-3">
-                    <Send color="#525252" />
+                <button type="submit" className="content-send-btn">
+                    <SendHorizontal size={12} color="#f5f5f5" />
                 </button>
             </form>
         </div>
