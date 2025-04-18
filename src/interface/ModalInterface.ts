@@ -1,7 +1,7 @@
 import { outputSchema } from "@/schema/outputMode";
 import { z } from "zod";
 
-export abstract class ModalInterface {
+export abstract class ModelInterface {
     abstract name: string;
 
     abstract init(apiKey?: string): void;
@@ -22,7 +22,7 @@ export abstract class ModalInterface {
  * Defines the contract for AI modal implementations.
  */
 export type GenerateResponseReturnType = Promise<{
-    error: Error | null;
+    error: unknown;
     success: z.infer<typeof outputSchema> | null;
 }>;
 
