@@ -1,19 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SendHorizontal, Maximize2, Minimize2, Bot } from "lucide-react";
+import {
+    SendHorizontal,
+    Maximize2,
+    Minimize2,
+    Bot,
+    ChevronDown,
+} from "lucide-react";
 import { extractCode, extractTextContent } from "./utils";
 import { SYSTEM_PROMPT } from "@/constants/prompt";
 import { Textarea } from "@/components/ui/textarea/Textarea";
-import { generateResponseFromGemini } from "@/models/gemini_2.0";
+import { ModelService } from "@/services/ModalService";
+import { ChatHistory } from "@/interface/chatHistory";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
+
+const GEMINI_API = import.meta.env.VITE_GOOGLE_GEMINI_KEY;
 
 export default function Content() {
     const [code, setCode] = useState<string>("");
-    const [userPrompt, setUserPrompt] = useState<string>("");
+    const [prompt, setPrompt] = useState<string>("");
     const [open, setOpen] = useState<boolean>(false);
-    const [aiResponse, setAiResponse] = useState<string | undefined>("");
+    const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
     const language = useRef("unknown");
-
-    console.log("re-render");
-    console.log(userPrompt);
 
     // Extract code and language after 5 seconds
     useEffect(() => {
@@ -49,38 +61,51 @@ export default function Content() {
             /{{problem_statement}}/gi,
             problemStatement
         )
-            .replace(/{{user_prompt}}/gi, userPrompt)
+            .replace(/{{user_prompt}}/gi, prompt)
             .replace(/{{user_code}}/gi, code)
             .replace(/{{programming_language}}/gi, language.current);
-    }, [problemStatement, code, language, userPrompt]);
+    }, [problemStatement, code, language, prompt]);
 
-    // Handle AI Response
-    const handleAiResponse = async () => {
-        try {
-            const response = await generateResponseFromGemini(
-                systemPromptWithContext
-            );
-            setAiResponse(response);
-        } catch (error) {
-            console.error("Failed to generate response:", error);
+    /**
+     * Handling the response from AI
+     */
+    const handleAiResponse = async (): Promise<void> => {
+        const modelService = new ModelService();
+        modelService.selectModel(GEMINI_API, "gemini-2.0-flash-001");
+
+        const { error, success } = await modelService.generate({
+            prompt: prompt,
+            systemPrompt: systemPromptWithContext,
+            extractedCode: code,
+        });
+
+        if (success) {
+            const res: ChatHistory = {
+                role: "assistant",
+                content: success,
+            };
+
+            setChatHistory((prev) => [...prev, res]);
+        }
+
+        if (error) {
+            console.log(error);
         }
     };
 
+    const handleSendmessage = async (value: string) => {
+        const newMsg: ChatHistory = { role: "user", content: value };
+        setChatHistory((prev) => [...prev, newMsg]);
+    };
     return (
         <>
-            <div
-                className="z-50"
-                style={{
-                    position: "fixed",
-                    bottom: "28px",
-                    right: "28px",
-                }}
-            >
+            <div className="main-content-contaier">
                 {open && (
                     <ChatWindow
-                        setUserPrompt={setUserPrompt}
+                        setPrompt={setPrompt}
                         handleAiResponse={handleAiResponse}
-                        response={aiResponse}
+                        chatHistory={chatHistory}
+                        handleSendMessage={handleSendmessage}
                     />
                 )}
 
@@ -90,7 +115,11 @@ export default function Content() {
                         title="Ask AI"
                         className="main-icon"
                     >
-                        <Bot size={16} color="#000000" />
+                        {open ? (
+                            <ChevronDown size={16} color="#000000" />
+                        ) : (
+                            <Bot size={16} color="#000000" />
+                        )}
                     </button>
                 </div>
             </div>
@@ -99,27 +128,31 @@ export default function Content() {
 }
 
 type ChatWindowProps = {
-    setUserPrompt: (prompt: string) => void;
+    setPrompt: (prompt: string) => void;
     handleAiResponse: () => Promise<void>;
-    response: string | undefined;
+    chatHistory: ChatHistory[];
+    handleSendMessage: (value: string) => Promise<void>;
 };
 
 export function ChatWindow({
-    setUserPrompt,
+    setPrompt,
     handleAiResponse,
-    response,
+    chatHistory,
+    handleSendMessage,
 }: ChatWindowProps) {
     const [maximize, setMaximize] = useState<boolean>(false);
     const [value, setValue] = useState<string>("");
 
+    console.log(chatHistory);
+
     // debouncing the 'setUserPrompt'
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            setUserPrompt(value);
+            setPrompt(value);
         }, 900);
 
         return () => clearTimeout(timeoutId);
-    }, [value, setUserPrompt]);
+    }, [value, setPrompt]);
 
     return (
         <div
@@ -143,23 +176,74 @@ export function ChatWindow({
                 </button>
             </div>
 
-            <div className="content-chat">{response}</div>
+            <div className="content-chat">
+                {chatHistory &&
+                    chatHistory.map((chat) => (
+                        <div>
+                            {chat.role === "user" &&
+                                typeof chat.content === "string" && (
+                                    <div className="user-chat-container">
+                                        <div className="user-chat">
+                                            {<div>{chat.content}</div>}
+                                        </div>
+                                    </div>
+                                )}
+                            {chat.role === "assistant" &&
+                                typeof chat.content === "object" && (
+                                    <div className="ai-response">
+                                        <div>{chat.content.feedback}</div>
+                                        <div className="hints">
+                                            <Accordion
+                                                className="accordion"
+                                                type="single"
+                                                collapsible
+                                            >
+                                                {chat.content.hints?.map(
+                                                    (hint, idx) => (
+                                                        <AccordionItem
+                                                            key={idx}
+                                                            value={`hint ${idx}`}
+                                                            className="accordion-item"
+                                                        >
+                                                            <AccordionTrigger className="accordion-trigger">
+                                                                <span>
+                                                                    Hint{" "}
+                                                                    {idx + 1}
+                                                                </span>
+                                                            </AccordionTrigger>
 
+                                                            <AccordionContent className="accordion-content">
+                                                                {hint}
+                                                            </AccordionContent>
+                                                        </AccordionItem>
+                                                    )
+                                                )}
+                                            </Accordion>
+                                        </div>
+                                    </div>
+                                )}
+                        </div>
+                    ))}
+            </div>
             <form
                 action="submit"
                 onSubmit={(event) => {
+                    if (value.trim().length === 0) return;
                     event.preventDefault();
                     handleAiResponse();
+                    handleSendMessage(value);
+                    setValue("");
                 }}
                 className="content-form"
             >
-                <Textarea
-                    placeholder="Ask for help..."
-                    onChange={(e) => setValue(e.target.value)}
-                />
-
+                <div className="textarea-container">
+                    <Textarea
+                        placeholder="Ask for a Hint"
+                        onChange={(e) => setValue(e.target.value)}
+                    />
+                </div>
                 <button type="submit" className="content-send-btn">
-                    <SendHorizontal size={12} color="#f5f5f5" />
+                    <SendHorizontal size={10} color="#f5f5f5" />
                 </button>
             </form>
         </div>
