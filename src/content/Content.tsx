@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-    SendHorizontal,
-    Maximize2,
-    Minimize2,
-    Bot,
-    ChevronDown,
-} from "lucide-react";
+import { SendHorizontal, Maximize2, Minimize2, Bot, ChevronDown } from "lucide-react";
 import { extractCode, extractTextContent } from "./utils";
 import { SYSTEM_PROMPT } from "@/constants/prompt";
 import { Textarea } from "@/components/ui/textarea/Textarea";
@@ -30,16 +24,12 @@ export default function Content() {
     // Extract code and language after 5 seconds
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            const codeNodes = document.querySelectorAll(
-                ".lines-content .view-lines .view-line"
-            );
+            const codeNodes = document.querySelectorAll(".lines-content .view-lines .view-line");
             const langButton = document.querySelector(
                 "button.rounded.items-center.whitespace-nowrap.focus\\:outline-none.inline-flex.bg-transparent.dark\\:bg-dark-transparent.text-text-secondary.dark\\:text-text-secondary.active\\:bg-transparent.dark\\:active\\:bg-dark-transparent.hover\\:bg-fill-secondary.dark\\:hover\\:bg-fill-secondary.px-1\\.5.py-0\\.5.text-sm.font-normal.group"
             );
 
-            language.current = langButton
-                ? extractTextContent(langButton)
-                : "unknown";
+            language.current = langButton ? extractTextContent(langButton) : "unknown";
             setCode(extractCode(codeNodes));
         }, 5000);
 
@@ -49,18 +39,13 @@ export default function Content() {
     // Extract problem statement
     const problemStatement = useMemo(() => {
         return (
-            document
-                .querySelector("meta[name=description]")
-                ?.getAttribute("content") || "unknown"
+            document.querySelector("meta[name=description]")?.getAttribute("content") || "unknown"
         );
     }, []);
 
     // Update the system prompt with dynamic context
     const systemPromptWithContext = useMemo(() => {
-        return SYSTEM_PROMPT.replace(
-            /{{problem_statement}}/gi,
-            problemStatement
-        )
+        return SYSTEM_PROMPT.replace(/{{problem_statement}}/gi, problemStatement)
             .replace(/{{user_prompt}}/gi, prompt)
             .replace(/{{user_code}}/gi, code)
             .replace(/{{programming_language}}/gi, language.current);
@@ -110,11 +95,7 @@ export default function Content() {
                 )}
 
                 <div className="icon-container">
-                    <button
-                        onClick={() => setOpen(!open)}
-                        title="Ask AI"
-                        className="main-icon"
-                    >
+                    <button onClick={() => setOpen(!open)} title="Ask AI" className="main-icon">
                         {open ? (
                             <ChevronDown size={16} color="#000000" />
                         ) : (
@@ -142,6 +123,7 @@ export function ChatWindow({
 }: ChatWindowProps) {
     const [maximize, setMaximize] = useState<boolean>(false);
     const [value, setValue] = useState<string>("");
+    const submitBtn = useRef<HTMLButtonElement>(null);
 
     console.log(chatHistory);
 
@@ -154,6 +136,16 @@ export function ChatWindow({
         return () => clearTimeout(timeoutId);
     }, [value, setPrompt]);
 
+    // Function to handle Enter key press
+    function handleEnterKeyPress(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (submitBtn.current) {
+                submitBtn.current.click();
+            }
+        }
+    }
+
     return (
         <div
             style={{
@@ -162,7 +154,7 @@ export function ChatWindow({
             }}
             className="content-container"
         >
-            <div className="content-navbar">
+            <nav className="content-navbar">
                 <button
                     onClick={() => setMaximize(!maximize)}
                     className="content-max-btn"
@@ -174,59 +166,45 @@ export function ChatWindow({
                         <Maximize2 size={12} color="#262626" />
                     )}
                 </button>
-            </div>
+            </nav>
 
-            <div className="content-chat">
+            <section className="content-chat">
                 {chatHistory &&
-                    chatHistory.map((chat) => (
-                        <div>
-                            {chat.role === "user" &&
-                                typeof chat.content === "string" && (
-                                    <div className="user-chat-container">
-                                        <div className="user-chat">
-                                            {<div>{chat.content}</div>}
-                                        </div>
-                                    </div>
-                                )}
-                            {chat.role === "assistant" &&
-                                typeof chat.content === "object" && (
-                                    <div className="ai-response">
-                                        <div>{chat.content.feedback}</div>
-                                        <div className="hints">
-                                            <Accordion
-                                                className="accordion"
-                                                type="single"
-                                                collapsible
-                                            >
-                                                {chat.content.hints?.map(
-                                                    (hint, idx) => (
-                                                        <AccordionItem
-                                                            key={idx}
-                                                            value={`hint ${idx}`}
-                                                            className="accordion-item"
-                                                        >
-                                                            <AccordionTrigger className="accordion-trigger">
-                                                                <span>
-                                                                    Hint{" "}
-                                                                    {idx + 1}
-                                                                </span>
-                                                            </AccordionTrigger>
+                    chatHistory.map((chat, idx) => (
+                        <article key={idx}>
+                            {chat.role === "user" && typeof chat.content === "string" && (
+                                <div className="user-chat-container">
+                                    <div className="user-chat">{<div>{chat.content}</div>}</div>
+                                </div>
+                            )}
+                            {chat.role === "assistant" && typeof chat.content === "object" && (
+                                <div className="ai-response">
+                                    <div>{chat.content.feedback}</div>
+                                    <div className="hints">
+                                        <Accordion className="accordion" type="single" collapsible>
+                                            {chat.content.hints?.map((hint, idx) => (
+                                                <AccordionItem
+                                                    key={idx}
+                                                    value={`hint ${idx}`}
+                                                    className="accordion-item"
+                                                >
+                                                    <AccordionTrigger className="accordion-trigger">
+                                                        <span>Hint {idx + 1}</span>
+                                                    </AccordionTrigger>
 
-                                                            <AccordionContent className="accordion-content">
-                                                                {hint}
-                                                            </AccordionContent>
-                                                        </AccordionItem>
-                                                    )
-                                                )}
-                                            </Accordion>
-                                        </div>
+                                                    <AccordionContent className="accordion-content">
+                                                        {hint}
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            ))}
+                                        </Accordion>
                                     </div>
-                                )}
-                        </div>
+                                </div>
+                            )}
+                        </article>
                     ))}
-            </div>
+            </section>
             <form
-                action="submit"
                 onSubmit={(event) => {
                     if (value.trim().length === 0) return;
                     event.preventDefault();
@@ -240,9 +218,10 @@ export function ChatWindow({
                     <Textarea
                         placeholder="Ask for a Hint"
                         onChange={(e) => setValue(e.target.value)}
+                        onKeyDown={handleEnterKeyPress}
                     />
                 </div>
-                <button type="submit" className="content-send-btn">
+                <button ref={submitBtn} className="content-send-btn">
                     <SendHorizontal size={10} color="#f5f5f5" />
                 </button>
             </form>
