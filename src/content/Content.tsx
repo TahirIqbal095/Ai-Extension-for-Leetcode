@@ -18,7 +18,6 @@ export default function Content() {
     const [code, setCode] = useState<string>("");
     const [prompt, setPrompt] = useState<string>("");
     const [open, setOpen] = useState<boolean>(false);
-    const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
     const language = useRef("unknown");
 
     // Extract code and language after 5 seconds
@@ -51,6 +50,54 @@ export default function Content() {
             .replace(/{{programming_language}}/gi, language.current);
     }, [problemStatement, code, language, prompt]);
 
+    return (
+        <>
+            <div className="main-content-contaier">
+                {open && (
+                    <ChatWindow
+                        setPrompt={setPrompt}
+                        prompt={prompt}
+                        systemPrompt={systemPromptWithContext}
+                        code={code}
+                    />
+                )}
+
+                <div className="icon-container">
+                    <button onClick={() => setOpen(!open)} title="Ask AI" className="main-icon">
+                        {open ? (
+                            <ChevronDown size={16} color="#000000" />
+                        ) : (
+                            <Bot size={16} color="#000000" />
+                        )}
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
+type ChatWindowProps = {
+    code: string;
+    systemPrompt: string;
+    prompt: string;
+    setPrompt: (prompt: string) => void;
+};
+
+export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindowProps) {
+    const [maximize, setMaximize] = useState<boolean>(false);
+    const [value, setValue] = useState<string>("");
+    const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+    const submitBtn = useRef<HTMLButtonElement>(null);
+
+    // debouncing the 'setUserPrompt'
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setPrompt(value);
+        }, 900);
+
+        return () => clearTimeout(timeoutId);
+    }, [value, setPrompt]);
+
     /**
      * Handling the response from AI
      */
@@ -60,7 +107,7 @@ export default function Content() {
 
         const { error, success } = await modelService.generate({
             prompt: prompt,
-            systemPrompt: systemPromptWithContext,
+            systemPrompt: systemPrompt,
             extractedCode: code,
         });
 
@@ -82,59 +129,6 @@ export default function Content() {
         const newMsg: ChatHistory = { role: "user", content: value };
         setChatHistory((prev) => [...prev, newMsg]);
     };
-    return (
-        <>
-            <div className="main-content-contaier">
-                {open && (
-                    <ChatWindow
-                        setPrompt={setPrompt}
-                        handleAiResponse={handleAiResponse}
-                        chatHistory={chatHistory}
-                        handleSendMessage={handleSendmessage}
-                    />
-                )}
-
-                <div className="icon-container">
-                    <button onClick={() => setOpen(!open)} title="Ask AI" className="main-icon">
-                        {open ? (
-                            <ChevronDown size={16} color="#000000" />
-                        ) : (
-                            <Bot size={16} color="#000000" />
-                        )}
-                    </button>
-                </div>
-            </div>
-        </>
-    );
-}
-
-type ChatWindowProps = {
-    setPrompt: (prompt: string) => void;
-    handleAiResponse: () => Promise<void>;
-    chatHistory: ChatHistory[];
-    handleSendMessage: (value: string) => Promise<void>;
-};
-
-export function ChatWindow({
-    setPrompt,
-    handleAiResponse,
-    chatHistory,
-    handleSendMessage,
-}: ChatWindowProps) {
-    const [maximize, setMaximize] = useState<boolean>(false);
-    const [value, setValue] = useState<string>("");
-    const submitBtn = useRef<HTMLButtonElement>(null);
-
-    console.log(chatHistory);
-
-    // debouncing the 'setUserPrompt'
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            setPrompt(value);
-        }, 900);
-
-        return () => clearTimeout(timeoutId);
-    }, [value, setPrompt]);
 
     // Function to handle Enter key press
     function handleEnterKeyPress(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -204,24 +198,27 @@ export function ChatWindow({
                         </article>
                     ))}
             </section>
-            <form
-                onSubmit={(event) => {
-                    if (value.trim().length === 0) return;
-                    event.preventDefault();
-                    handleAiResponse();
-                    handleSendMessage(value);
-                    setValue("");
-                }}
-                className="content-form"
-            >
+            <form className="content-form">
                 <div className="textarea-container">
                     <Textarea
+                        value={value}
                         placeholder="Ask for a Hint"
                         onChange={(e) => setValue(e.target.value)}
                         onKeyDown={handleEnterKeyPress}
                     />
                 </div>
-                <button ref={submitBtn} className="content-send-btn">
+                <button
+                    ref={submitBtn}
+                    onClick={(e) => {
+                        if (value.trim().length === 0) return;
+
+                        e.preventDefault();
+                        setValue("");
+                        handleAiResponse();
+                        handleSendmessage(value);
+                    }}
+                    className="content-send-btn"
+                >
                     <SendHorizontal size={10} color="#f5f5f5" />
                 </button>
             </form>
