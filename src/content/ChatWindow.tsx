@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea/Textarea";
 import { ModelService } from "@/services/ModalService";
 import { ChatHistory } from "@/interface/chatHistory";
@@ -25,6 +25,7 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
     const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
     const submitBtn = useRef<HTMLButtonElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const messageEndRef = useRef<HTMLDivElement>(null);
 
     console.log(systemPrompt);
     /**
@@ -81,6 +82,12 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
             }
         }
     }
+
+    useEffect(() => {
+        if (messageEndRef.current) {
+            messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [chatHistory]);
 
     return (
         <div
@@ -139,6 +146,8 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
                             )}
                         </article>
                     ))}
+
+                <div ref={messageEndRef} />
             </section>
             <form className="content-form">
                 <div className="textarea-container">
