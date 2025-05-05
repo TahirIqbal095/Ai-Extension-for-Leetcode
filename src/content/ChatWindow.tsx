@@ -9,6 +9,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Maximize2, Minimize2, SendHorizontal } from "lucide-react";
+import { addChatHistory, getChatHistory, CHAT_HISTORY_KEY } from "@/lib/indexedDb";
 
 const GEMINI_API = import.meta.env.VITE_GOOGLE_GEMINI_KEY;
 
@@ -23,11 +24,19 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
     const [maximize, setMaximize] = useState<boolean>(false);
     const [value, setValue] = useState<string>("");
     const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
-    const submitBtn = useRef<HTMLButtonElement>(null);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const messageEndRef = useRef<HTMLDivElement>(null);
 
-    console.log(systemPrompt);
+    useEffect(() => {
+        const fetchChatHistory = async () => {
+            const data = await getChatHistory(CHAT_HISTORY_KEY);
+
+            if (!data) return;
+            setChatHistory((prev) => [...prev, ...data]);
+        };
+
+        fetchChatHistory();
+    }, []);
+
     /**
      * Handling the response from AI
      */
@@ -47,6 +56,9 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
                 content: success,
             };
 
+            const updatedChatHistory = [...chatHistory, res];
+            addChatHistory(CHAT_HISTORY_KEY, updatedChatHistory);
+
             setChatHistory((prev) => [...prev, res]);
         }
 
@@ -55,21 +67,18 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
         }
     };
 
-    const handleSendmessage = async (value: string) => {
-        if (textareaRef.current) {
-            setValue(textareaRef.current.value);
-            textareaRef.current.value = "";
-        }
-        if (value.trim() === "") {
-            return;
-        }
-        // Add user message to chat history
-        const newMsg: ChatHistory = { role: "user", content: value };
-        setChatHistory((prev) => [...prev, newMsg]);
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
         setPrompt(value);
-        setValue("");
+        const newMsg: ChatHistory = { role: "user", content: value };
+        const updatedChatHistory = [...chatHistory, newMsg];
+        addChatHistory(CHAT_HISTORY_KEY, updatedChatHistory);
+
+        setChatHistory((prev) => [...prev, newMsg]);
 
         handleAiResponse();
+        setValue("");
     };
 
     // Function to handle Enter key press
@@ -77,9 +86,15 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
 
-            if (submitBtn.current) {
-                submitBtn.current.click();
-            }
+            setPrompt(value);
+            const newMsg: ChatHistory = { role: "user", content: value };
+            const updatedChatHistory = [...chatHistory, newMsg];
+            addChatHistory(CHAT_HISTORY_KEY, updatedChatHistory);
+
+            setChatHistory((prev) => [...prev, newMsg]);
+
+            handleAiResponse();
+            setValue("");
         }
     }
 
@@ -149,24 +164,16 @@ export function ChatWindow({ setPrompt, prompt, systemPrompt, code }: ChatWindow
 
                 <div ref={messageEndRef} />
             </section>
-            <form className="content-form">
+            <form className="content-form" onSubmit={(e) => handleSubmit(e)}>
                 <div className="textarea-container">
                     <Textarea
-                        ref={textareaRef}
                         value={value}
-                        placeholder="Ask for a Hint"
                         onChange={(e) => setValue(e.target.value)}
+                        placeholder="Ask for a Hint"
                         onKeyDown={handleEnterKeyPress}
                     />
                 </div>
-                <button
-                    ref={submitBtn}
-                    onClick={(e) => {
-                        e.preventDefault();
-                        handleSendmessage(value);
-                    }}
-                    className="content-send-btn"
-                >
+                <button type="submit" className="content-send-btn">
                     <SendHorizontal size={10} color="#f5f5f5" />
                 </button>
             </form>
