@@ -8,6 +8,7 @@ export default function Content() {
     const [code, setCode] = useState<string>("");
     const [prompt, setPrompt] = useState<string>("");
     const [open, setOpen] = useState<boolean>(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const language = useRef("unknown");
 
     // Extract code and language after 5 seconds
@@ -32,6 +33,13 @@ export default function Content() {
         );
     }, []);
 
+    // Focus the textarea after ChatWindow has opened and mounted
+    useEffect(() => {
+        if (open && textareaRef.current) {
+            textareaRef.current.focus();
+        }
+    }, [open]);
+
     // Update the system prompt with dynamic context
     const systemPromptWithContext = useMemo(() => {
         return SYSTEM_PROMPT.replace(/{{problem_statement}}/gi, problemStatement)
@@ -49,11 +57,18 @@ export default function Content() {
                         prompt={prompt}
                         systemPrompt={systemPromptWithContext}
                         code={code}
+                        ref={textareaRef}
                     />
                 )}
 
                 <div className="icon-container">
-                    <button onClick={() => setOpen(!open)} title="Ask AI" className="main-icon">
+                    <button
+                        onClick={() => {
+                            setOpen(!open);
+                        }}
+                        title="Ask AI"
+                        className="main-icon"
+                    >
                         {open ? (
                             <ChevronDown size={16} color="#000000" />
                         ) : (
