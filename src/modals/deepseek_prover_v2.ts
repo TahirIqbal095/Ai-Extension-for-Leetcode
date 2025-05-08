@@ -1,14 +1,14 @@
+import { ValidModel } from "@/constants/valid_models";
 import {
     GenerateResponseParamsType,
     GenerateResponseReturnType,
     ModelInterface,
 } from "@/interface/ModalInterface";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObjectResponse } from "./utils";
-import { ValidModel } from "@/constants/valid_models";
 
-export class Gemini_2_0_flash implements ModelInterface {
-    name: ValidModel = "gemini-2.0-flash-001";
+export class Deepseek_Prover_v2 implements ModelInterface {
+    name: ValidModel = "deepseek-chat";
     private apiKey: string = "";
 
     init(apiKey: string): void {
@@ -16,15 +16,16 @@ export class Gemini_2_0_flash implements ModelInterface {
     }
 
     async generateResponse(props: GenerateResponseParamsType): GenerateResponseReturnType {
-        const google = createGoogleGenerativeAI({
+        const deepseek = createDeepSeek({
             apiKey: this.apiKey,
         });
+
         try {
             const data = await generateObjectResponse({
                 systemPrompt: props.systemPrompt,
-                extractedCode: props.extractedCode,
                 prompt: props.prompt,
-                model: google(this.name),
+                extractedCode: props.extractedCode,
+                model: deepseek(this.name),
             });
 
             return { error: null, success: data.object };
