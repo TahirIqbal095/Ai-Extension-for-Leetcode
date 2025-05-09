@@ -27,6 +27,10 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
         const messageEndRef = useRef<HTMLDivElement>(null);
 
+        /**
+         * Fetching chat history from IndexedDB
+         * and setting it to the state
+         */
         useEffect(() => {
             const fetchChatHistory = async () => {
                 const data = await getChatHistory(CHAT_HISTORY_KEY);
