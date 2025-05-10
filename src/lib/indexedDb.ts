@@ -28,4 +28,9 @@ export const getChatHistory = async (key: string): Promise<ChatHistory[] | void>
     return data;
 };
 
+export const deleteChatHistory = async (key: string): Promise<void> => {
+    const db = await dbPromsise;
+    await db.delete("chats", key);
+};
+
 export const CHAT_HISTORY_KEY = "chat-history";
