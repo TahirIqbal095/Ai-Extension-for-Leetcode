@@ -9,7 +9,12 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Maximize2, Minimize2, SendHorizontal } from "lucide-react";
-import { getChatHistory, CHAT_HISTORY_KEY, addChatHistory } from "@/lib/indexedDb";
+import {
+    getChatHistory,
+    CHAT_HISTORY_KEY,
+    addChatHistory,
+    deleteChatHistory,
+} from "@/lib/indexedDb";
 import { useChromeStorage } from "@/hooks/useChromeStorage";
 
 type ChatWindowProps = {
@@ -62,12 +67,12 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         const handleAiResponse = async (): Promise<void> => {
             const modelService = new ModelService();
 
-            const m = await getSelectedModel();
-            if (!m) {
+            const model = await getSelectedModel();
+            if (!model) {
                 return;
             }
 
-            const { apiKey, model } = await getkeyAndModel(m);
+            const { apiKey } = await getkeyAndModel(model);
 
             modelService.selectModel(apiKey, model);
             const { error, success } = await modelService.generate({
@@ -86,7 +91,13 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
             }
 
             if (error) {
-                console.log(error);
+                const errmessage: ChatHistory = {
+                    role: "assistant",
+                    content: "I couldn't get a response from the server. Please try again.",
+                };
+
+                setChatHistory((prev) => [...prev, errmessage]);
+                console.error("Error:", error);
             }
         };
 
@@ -116,6 +127,11 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                 setValue("");
             }
         }
+
+        const clearChatHistory = () => {
+            setChatHistory([]);
+            deleteChatHistory(CHAT_HISTORY_KEY);
+        };
 
         return (
             <div
