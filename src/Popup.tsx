@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import leetcode from "@/assets/leetcode.png";
 import {
@@ -12,27 +12,41 @@ import {
 } from "@/components/ui/select";
 import { Eye, EyeOff } from "lucide-react";
 import { VALID_MODELS, ValidModel } from "@/constants/valid_models";
-import { useChromeStorage } from "./hooks/useChromeStorage";
+import { useChromeStorage } from "@/hooks/useChromeStorage";
 
 const Popup: React.FC = () => {
-    const [apiKey, setApiKey] = React.useState<string>("");
-    const [model, setModel] = React.useState<ValidModel | null>(null);
-    const [showPassword, setShowPassword] = React.useState<boolean>(false);
-    const [submitMessage, setSubmitMessage] = React.useState<{
+    const [apiKey, setApiKey] = useState<string>("");
+    const [model, setModel] = useState<ValidModel | undefined>(undefined);
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const [submitMessage, setSubmitMessage] = useState<{
         state: "error" | "success";
         message: string;
     } | null>(null);
     const [isLoading, setIsloading] = useState<boolean>(false);
+    const [activeModel, setAciveModel] = useState<string>("");
 
-    React.useEffect(() => {
+    const { getSelectedModel, getkeyAndModel, setKeyAndModel, setSelectedModel } =
+        useChromeStorage();
+
+    useEffect(() => {
         const loadChromeStorage = async () => {
-            if (!chrome) return;
+            if (typeof chrome === "undefined" || !chrome.storage) return;
 
-            const { getSelectedModel, getkeyAndModel } = useChromeStorage();
-            const m = await getSelectedModel();
-            const { apiKey } = await getkeyAndModel(m);
-            setModel(m);
-            setApiKey(apiKey);
+            try {
+                const m = await getSelectedModel();
+                if (m) {
+                    const { apiKey } = await getkeyAndModel(m);
+                    setModel(m);
+                    setAciveModel(m);
+                    setApiKey(apiKey || "");
+                }
+            } catch (error) {
+                console.error("Failed to load from Chrome storage:", error);
+                setSubmitMessage({
+                    state: "error",
+                    message: "Failed to load saved settings",
+                });
+            }
         };
 
         loadChromeStorage();
@@ -43,22 +57,41 @@ const Popup: React.FC = () => {
 
         try {
             setIsloading(true);
-            const { setKeyAndModel } = useChromeStorage();
-            if (apiKey && model) {
-                await setKeyAndModel(apiKey, model);
+            if (!apiKey || !model) {
+                throw new Error("API key and model selection are required");
             }
+
+            await setKeyAndModel(apiKey, model);
 
             setSubmitMessage({
                 state: "success",
-                message: "Api key saved successfully",
+                message: "API key saved successfully",
             });
-        } catch (error: any) {
+        } catch (error) {
+            console.log(error);
             setSubmitMessage({
                 state: "error",
-                message: error.message,
+                message: "Failed to save settings",
             });
         } finally {
             setIsloading(false);
+        }
+    };
+
+    const handleSelect = (model: ValidModel) => {
+        try {
+            if (model) {
+                console.log("Selected model:", model);
+                setSelectedModel(model);
+                setAciveModel(model);
+                setModel(model);
+            }
+        } catch (error) {
+            console.error("Failed to set selected model:", error);
+            setSubmitMessage({
+                state: "error",
+                message: "Failed to set selected model",
+            });
         }
     };
 
@@ -79,13 +112,13 @@ const Popup: React.FC = () => {
                     <div className="space-y-0.5">
                         <label
                             htmlFor="input"
-                            className="block text-sm font-medium text-gray-600 ml-1"
+                            className="block text-sm font-medium text-gray-700 ml-1"
                         >
                             Select Model
                         </label>
                         <Select
-                            onValueChange={(value: ValidModel) => setModel(value)}
-                            value={model as ValidModel}
+                            onValueChange={(value: ValidModel) => handleSelect(value)}
+                            value={activeModel}
                             required
                         >
                             <SelectTrigger className="w-full text-xs">
@@ -106,7 +139,7 @@ const Popup: React.FC = () => {
                     <div className="relative space-y-0.5">
                         <label
                             htmlFor="input"
-                            className="block text-sm font-medium text-gray-600 ml-1"
+                            className="block text-sm font-medium text-gray-700 ml-1"
                         >
                             Api Key
                         </label>
@@ -122,8 +155,8 @@ const Popup: React.FC = () => {
                         />
                         <button
                             type="button"
-                            disabled={isLoading}
-                            className="absolute top-8 right-4 cursor-pointer z-50"
+                            disabled={!model}
+                            className="absolute top-[34px] right-4 cursor-pointer z-50 disable:opacity-70 disabled:cursor-not-allowed"
                             onClick={(e) => {
                                 e.preventDefault();
                                 setShowPassword(!showPassword);
@@ -140,7 +173,8 @@ const Popup: React.FC = () => {
                     <div className="mt-4">
                         <button
                             type="submit"
-                            className="px-4 py-2 text-white bg-gradient-to-r from-blue-600 to-blue-400 rounded-md hover:opacity-90 w-full shadow cursor-pointer active:scale-95 transition-transform duration-200 ease-in-out"
+                            disabled={!model || isLoading}
+                            className="px-4 py-2 text-white bg-gradient-to-r from-blue-600 to-blue-400 rounded-md hover:opacity-90 w-full shadow cursor-pointer active:scale-95 transition-transform duration-200 ease-in-out disabled:opacity-80 disabled:cursor-not-allowed"
                         >
                             <span>Submit</span>
                         </button>

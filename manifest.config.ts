@@ -11,6 +11,8 @@ export default defineManifest({
         default_popup: "popup.html",
     },
 
+    permissions: ["storage", "activeTab", "scripting"],
+
     icons: {
         "16": "icons/icon16.png",
         "32": "icons/icon32.png",
