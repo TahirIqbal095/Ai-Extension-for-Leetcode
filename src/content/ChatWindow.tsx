@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { Maximize2, Minimize2, SendHorizontal } from "lucide-react";
 import { getChatHistory, CHAT_HISTORY_KEY, addChatHistory } from "@/lib/indexedDb";
-
-const GEMINI_API = import.meta.env.VITE_GOOGLE_GEMINI_KEY;
+import { useChromeStorage } from "@/hooks/useChromeStorage";
 
 type ChatWindowProps = {
     code: string;
@@ -26,6 +25,8 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         const [value, setValue] = useState<string>("");
         const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
         const messageEndRef = useRef<HTMLDivElement>(null);
+
+        const { getSelectedModel, getkeyAndModel } = useChromeStorage();
 
         /**
          * Fetching chat history from IndexedDB
@@ -60,8 +61,15 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
          */
         const handleAiResponse = async (): Promise<void> => {
             const modelService = new ModelService();
-            modelService.selectModel(GEMINI_API, "gemini-2.0-flash-001");
 
+            const m = await getSelectedModel();
+            if (!m) {
+                return;
+            }
+
+            const { apiKey, model } = await getkeyAndModel(m);
+
+            modelService.selectModel(apiKey, model);
             const { error, success } = await modelService.generate({
                 prompt: prompt,
                 systemPrompt: systemPrompt,
