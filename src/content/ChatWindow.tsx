@@ -8,7 +8,16 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Maximize2, Minimize2, SendHorizontal } from "lucide-react";
+import {
+    Binary,
+    Code,
+    EllipsisVertical,
+    Maximize2,
+    MessageSquareCode,
+    Minimize2,
+    SendHorizontal,
+    Trash,
+} from "lucide-react";
 import {
     getChatHistory,
     CHAT_HISTORY_KEY,
@@ -136,24 +145,87 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         return (
             <div
                 style={{
-                    width: maximize ? "600px" : "360px",
-                    height: "500px",
+                    width: maximize ? "500px" : "360px",
+                    height: maximize ? "520px" : "500px",
                 }}
                 className="content-container"
             >
                 <nav className="content-navbar">
-                    <button
-                        onClick={() => setMaximize(!maximize)}
-                        className="content-max-btn"
-                        title={maximize ? "Minimize" : "Maximize"}
-                    >
-                        {maximize ? (
-                            <Minimize2 size={12} color="#262626" />
-                        ) : (
-                            <Maximize2 size={12} color="#262626" />
-                        )}
-                    </button>
+                    <div className="content-navbar-left">
+                        <img
+                            src="https://repository-images.githubusercontent.com/98157751/7e85df00-ec67-11e9-98d3-684a4b66ae37"
+                            alt="img"
+                        />
+                        <h1 style={{ fontSize: "14px", fontWeight: "600", color: "#262626" }}>
+                            LeetAid
+                        </h1>
+                    </div>
+                    <div className="content-navbar-right">
+                        <button
+                            onClick={() => setMaximize(!maximize)}
+                            className="content-max-btn"
+                            title={maximize ? "Minimize" : "Maximize"}
+                        >
+                            {maximize ? (
+                                <Minimize2 size={12} color="#262626" />
+                            ) : (
+                                <Maximize2 size={12} color="#262626" />
+                            )}
+                        </button>
+                        <div className="dropdown">
+                            <button className="ellipsis-container">
+                                <EllipsisVertical size={12} color="#262626" />
+                            </button>
+                            <div className="dropdown-menu">
+                                <div className="dropdown-item" onClick={clearChatHistory}>
+                                    <Trash size={16} color="#ea580c" />
+                                    <span>Clear Chat</span>
+                                </div>
+                                <div className="dropdown-item">
+                                    <MessageSquareCode size={16} color="#16a34a" />
+                                    <span>Feedback</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </nav>
+
+                {chatHistory.length === 0 && (
+                    <div className="prompt-card-container">
+                        <div className="demo-prompt-container">
+                            <div className="promt-card">
+                                <div>
+                                    <Code size={20} color="#ea580c" />
+                                </div>
+                                <p
+                                    style={{
+                                        fontSize: "0.2rem",
+                                        fontWeight: "normal",
+                                        color: "#262626",
+                                    }}
+                                >
+                                    How can I improve my code? Please provide me with some hints.
+                                </p>
+                                <span className="card-line line1" />
+                            </div>
+                            <div className="promt-card">
+                                <div>
+                                    <Binary size={20} color="#16a34a" />
+                                </div>
+                                <p
+                                    style={{
+                                        fontSize: "0.2rem",
+                                        fontWeight: "normal",
+                                        color: "#262626",
+                                    }}
+                                >
+                                    What are the potential issues with my code?
+                                </p>
+                                <span className="card-line line2" />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <section className="content-chat">
                     {chatHistory &&

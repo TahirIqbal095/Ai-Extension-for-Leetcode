@@ -1,5 +1,17 @@
 /* Icon CSS */
 
+body,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a {
+    font-family: "Lato", sans-serif;
+}
+
 .main-content-contaier {
     position: fixed;
     bottom: 28px;
@@ -25,6 +37,134 @@
     transition: all 0.3s ease;
 }
 
+/* prompt cards */
+
+.prompt-card-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-items: center;
+    align-items: center;
+}
+
+.demo-prompt-container {
+    margin-inline: 4px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.promt-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%;
+    border-radius: 16px;
+    border: 1px solid #ccc;
+    border-color: #e5e5e5;
+    padding: 8px;
+    transition: box-shadow 0.3s;
+}
+
+.promt-card:hover {
+    box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
+}
+
+.card-line {
+    position: absolute;
+    top: 0;
+    width: calc(100% - 25px);
+    border-radius: inherit;
+    margin-inline: auto;
+    height: 2px;
+}
+
+.line1 {
+    background: linear-gradient(to right, transparent, #ea580c, transparent);
+}
+
+.line2 {
+    background: linear-gradient(to right, transparent, #16a34a, transparent);
+}
+
+/* navbar CSS */
+
+.content-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1.5px solid #e5e5e5;
+}
+
+.content-navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.content-navbar-left img {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+}
+
+.content-navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.content-max-btn,
+.ellipsis-container {
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.content-max-btn:hover,
+.ellipsis-container:hover {
+    background-color: #e5e5e5;
+}
+
+/* dropdown */
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%; /* below the button */
+    right: 0;
+    background-color: white;
+    min-width: 150px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 10px;
+    font-size: 12px;
+    color: black;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
 /* Content CSS */
 .content-container {
     display: flex;
@@ -33,27 +173,7 @@
     margin-bottom: 1rem;
     border-radius: 8px;
     padding: 6px;
-    transition: width 0.3s ease;
-}
-
-.content-form {
-    position: relative;
-    margin-top: auto;
-}
-
-.content-navbar {
-    display: flex;
-    justify-content: flex-end;
-    padding-bottom: 12px;
-}
-
-.content-max-btn {
-    padding: 8px;
-    border-radius: 5px;
-}
-
-.content-max-btn:hover {
-    background-color: #e5e5e5;
+    transition: all 0.3s ease;
 }
 
 .content-send-btn {
@@ -70,6 +190,7 @@
     width: 100%;
     overflow-y: auto;
     color: #262626;
+    padding-top: 5px;
     margin-bottom: 6px;
 }
 
@@ -86,6 +207,7 @@
     background-color: #2563eb;
     padding: 0.3rem 0.6rem;
     border-radius: 16px;
+    border-bottom-right-radius: 0px;
     margin-bottom: 1.2rem;
 }
 
@@ -107,6 +229,11 @@
 
 .accordion-trigger {
     color: #262626;
+}
+
+.content-form {
+    position: relative;
+    margin-top: auto;
 }
 
 /* scroll bar  */
