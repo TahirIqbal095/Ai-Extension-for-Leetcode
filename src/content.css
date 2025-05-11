@@ -8,7 +8,8 @@ h3,
 h4,
 h5,
 h6,
-a {
+a,
+textarea {
     font-family: "Lato", sans-serif;
 }
 
