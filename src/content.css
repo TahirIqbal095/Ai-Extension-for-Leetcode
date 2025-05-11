@@ -48,6 +48,7 @@ a {
 }
 
 .demo-prompt-container {
+    position: relative;
     margin-inline: 4px;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -87,6 +88,13 @@ a {
 
 .line2 {
     background: linear-gradient(to right, transparent, #16a34a, transparent);
+}
+
+.prompt-card-click {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    cursor: pointer;
 }
 
 /* navbar CSS */
@@ -154,6 +162,8 @@ a {
 .dropdown-item {
     display: flex;
     align-items: center;
+    border-radius: inherit;
+    cursor: pointer;
     gap: 0.5rem;
     width: 100%;
     padding: 10px;
@@ -197,6 +207,8 @@ a {
 .user-chat-container {
     display: flex;
     margin-right: 6px;
+    max-width: 80%;
+    margin-left: auto;
 }
 
 .user-chat {

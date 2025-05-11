@@ -8,16 +8,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-    Binary,
-    Code,
-    EllipsisVertical,
-    Maximize2,
-    MessageSquareCode,
-    Minimize2,
-    SendHorizontal,
-    Trash,
-} from "lucide-react";
+import { Maximize2, Minimize2, SendHorizontal } from "lucide-react";
 import {
     getChatHistory,
     CHAT_HISTORY_KEY,
@@ -25,6 +16,9 @@ import {
     deleteChatHistory,
 } from "@/lib/indexedDb";
 import { useChromeStorage } from "@/hooks/useChromeStorage";
+import { cardContent } from "@/constants/cardContent";
+import { PromptCard } from "@/components/PromptCard";
+import { DropDown } from "@/components/DropDown";
 
 type ChatWindowProps = {
     code: string;
@@ -38,7 +32,10 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         const [maximize, setMaximize] = useState<boolean>(false);
         const [value, setValue] = useState<string>("");
         const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+        const [isLoading, setIsLoading] = useState<boolean>(false);
         const messageEndRef = useRef<HTMLDivElement>(null);
+
+        console.log("ChatWindow rendered", isLoading);
 
         const { getSelectedModel, getkeyAndModel } = useChromeStorage();
 
@@ -82,8 +79,10 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
             }
 
             const { apiKey } = await getkeyAndModel(model);
-
             modelService.selectModel(apiKey, model);
+
+            setIsLoading(true);
+
             const { error, success } = await modelService.generate({
                 prompt: prompt,
                 systemPrompt: systemPrompt,
@@ -97,6 +96,7 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                 };
 
                 setChatHistory((prev) => [...prev, res]);
+                setIsLoading(false);
             }
 
             if (error) {
@@ -107,12 +107,14 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
 
                 setChatHistory((prev) => [...prev, errmessage]);
                 console.error("Error:", error);
+                setIsLoading(false);
             }
         };
 
-        const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
-
+        const submitPrompt = () => {
+            if (value.trim() === "") {
+                return;
+            }
             setPrompt(value);
             const newMsg: ChatHistory = { role: "user", content: value };
 
@@ -122,20 +124,26 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
             setValue("");
         };
 
+        const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            submitPrompt();
+        };
+
         // Function to handle Enter key press
         function handleEnterKeyPress(e: React.KeyboardEvent<HTMLTextAreaElement>) {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-
-                setPrompt(value);
-                const newMsg: ChatHistory = { role: "user", content: value };
-
-                setChatHistory((prev) => [...prev, newMsg]);
-
-                handleAiResponse();
-                setValue("");
+                submitPrompt();
             }
         }
+
+        const handlePromptCardClick = (e: React.MouseEvent<HTMLSpanElement>, text: string) => {
+            e.preventDefault();
+            setPrompt(text);
+            setChatHistory((prev) => [...prev, { role: "user", content: text }]);
+
+            handleAiResponse();
+        };
 
         const clearChatHistory = () => {
             setChatHistory([]);
@@ -172,57 +180,21 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                                 <Maximize2 size={12} color="#262626" />
                             )}
                         </button>
-                        <div className="dropdown">
-                            <button className="ellipsis-container">
-                                <EllipsisVertical size={12} color="#262626" />
-                            </button>
-                            <div className="dropdown-menu">
-                                <div className="dropdown-item" onClick={clearChatHistory}>
-                                    <Trash size={16} color="#ea580c" />
-                                    <span>Clear Chat</span>
-                                </div>
-                                <div className="dropdown-item">
-                                    <MessageSquareCode size={16} color="#16a34a" />
-                                    <span>Feedback</span>
-                                </div>
-                            </div>
-                        </div>
+                        <DropDown clearChatHistory={clearChatHistory} />
                     </div>
                 </nav>
 
                 {chatHistory.length === 0 && (
                     <div className="prompt-card-container">
                         <div className="demo-prompt-container">
-                            <div className="promt-card">
-                                <div>
-                                    <Code size={20} color="#ea580c" />
-                                </div>
-                                <p
-                                    style={{
-                                        fontSize: "0.2rem",
-                                        fontWeight: "normal",
-                                        color: "#262626",
-                                    }}
-                                >
-                                    How can I improve my code? Please provide me with some hints.
-                                </p>
-                                <span className="card-line line1" />
-                            </div>
-                            <div className="promt-card">
-                                <div>
-                                    <Binary size={20} color="#16a34a" />
-                                </div>
-                                <p
-                                    style={{
-                                        fontSize: "0.2rem",
-                                        fontWeight: "normal",
-                                        color: "#262626",
-                                    }}
-                                >
-                                    What are the potential issues with my code?
-                                </p>
-                                <span className="card-line line2" />
-                            </div>
+                            {cardContent.map((card) => (
+                                <PromptCard
+                                    icon={card.icon}
+                                    text={card.text}
+                                    lineClass={card.lineClass}
+                                    handleClick={handlePromptCardClick}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}
@@ -239,6 +211,7 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                                 {chat.role === "assistant" && typeof chat.content === "object" && (
                                     <div className="ai-response">
                                         <div>{chat.content.feedback}</div>
+                                        <div>{chat.content.snippet}</div>
                                         <div className="hints">
                                             <Accordion
                                                 className="accordion"
