@@ -2,12 +2,6 @@ import { useState, useRef, useEffect, forwardRef } from "react";
 import { Textarea } from "@/components/ui/textarea/Textarea";
 import { ModelService } from "@/services/ModalService";
 import { ChatHistory } from "@/interface/chatHistory";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Maximize2, Minimize2, SendHorizontal } from "lucide-react";
 import {
     getChatHistory,
@@ -19,6 +13,7 @@ import { useChromeStorage } from "@/hooks/useChromeStorage";
 import { cardContent } from "@/constants/cardContent";
 import { PromptCard } from "@/components/PromptCard";
 import { DropDown } from "@/components/DropDown";
+import { ResponseRenderer } from "@/components/ResponseRenderer";
 
 type ChatWindowProps = {
     code: string;
@@ -205,37 +200,17 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                             <article key={idx}>
                                 {chat.role === "user" && typeof chat.content === "string" && (
                                     <div className="user-chat-container">
-                                        <div className="user-chat">{<div>{chat.content}</div>}</div>
+                                        <div className="user-chat">
+                                            <p>{chat.content}</p>
+                                        </div>
                                     </div>
                                 )}
                                 {chat.role === "assistant" && typeof chat.content === "object" && (
-                                    <div className="ai-response">
-                                        <div>{chat.content.feedback}</div>
-                                        <div>{chat.content.snippet}</div>
-                                        <div className="hints">
-                                            <Accordion
-                                                className="accordion"
-                                                type="single"
-                                                collapsible
-                                            >
-                                                {chat.content.hints?.map((hint, idx) => (
-                                                    <AccordionItem
-                                                        key={idx}
-                                                        value={`hint ${idx}`}
-                                                        className="accordion-item"
-                                                    >
-                                                        <AccordionTrigger className="accordion-trigger">
-                                                            <span>Hint {idx + 1}</span>
-                                                        </AccordionTrigger>
-
-                                                        <AccordionContent className="accordion-content">
-                                                            {hint}
-                                                        </AccordionContent>
-                                                    </AccordionItem>
-                                                ))}
-                                            </Accordion>
-                                        </div>
-                                    </div>
+                                    <ResponseRenderer
+                                        feedback={chat.content.feedback}
+                                        hints={chat.content.hints}
+                                        snippet={chat.content.snippet}
+                                    />
                                 )}
                             </article>
                         ))}
