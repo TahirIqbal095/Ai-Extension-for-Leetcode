@@ -14,6 +14,7 @@ import { cardContent } from "@/constants/cardContent";
 import { PromptCard } from "@/components/PromptCard";
 import { DropDown } from "@/components/DropDown";
 import { ResponseRenderer } from "@/components/ResponseRenderer";
+import { SquareLoader } from "react-spinners";
 
 type ChatWindowProps = {
     code: string;
@@ -29,8 +30,7 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
         const [isLoading, setIsLoading] = useState<boolean>(false);
         const messageEndRef = useRef<HTMLDivElement>(null);
-
-        console.log("ChatWindow rendered", isLoading);
+        const loaderRef = useRef<HTMLDivElement>(null);
 
         const { getSelectedModel, getkeyAndModel } = useChromeStorage();
 
@@ -50,11 +50,6 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         }, []);
 
         useEffect(() => {
-            // for scrolling to the bottom of the chat
-            if (messageEndRef.current) {
-                messageEndRef.current.scrollIntoView({ behavior: "smooth" });
-            }
-
             const saveChatHistory = async () => {
                 await addChatHistory(CHAT_HISTORY_KEY, chatHistory);
             };
@@ -145,6 +140,15 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
             deleteChatHistory(CHAT_HISTORY_KEY);
         };
 
+        useEffect(() => {
+            // for scrolling to the bottom of the chat
+            if (isLoading && loaderRef.current) {
+                loaderRef.current.scrollIntoView({ behavior: "smooth" });
+            } else if (messageEndRef.current) {
+                messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, [chatHistory, isLoading]);
+
         return (
             <div
                 style={{
@@ -214,6 +218,13 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                                 )}
                             </article>
                         ))}
+
+                    {isLoading && (
+                        <div className="loader-container" ref={loaderRef}>
+                            <SquareLoader color="#2563eb" size={18} />
+                            <p style={{ color: "#262626", fontSize: "12px" }}>Thinking...</p>
+                        </div>
+                    )}
 
                     <div ref={messageEndRef} />
                 </section>
