@@ -1,22 +1,21 @@
-import { ValidModel } from "@/constants/valid_models";
 import {
     GenerateResponseParamsType,
     GenerateResponseReturnType,
     ModelInterface,
 } from "@/interface/ModalInterface";
-import { createDeepSeek } from "@ai-sdk/deepseek";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObjectResponse } from "./utils";
 
-export class Deepseek_Prover_v2 implements ModelInterface {
-    name: ValidModel = "deepseek-chat";
+export class Gpt_3_5_turbo implements ModelInterface {
+    name: string = "";
     private apiKey: string = "";
 
-    init(apiKey: string): void {
-        this.apiKey = apiKey;
+    init(apiKey?: string): void {
+        this.apiKey = apiKey || "";
     }
 
     async generateResponse(props: GenerateResponseParamsType): GenerateResponseReturnType {
-        const deepseek = createDeepSeek({
+        const openai = createOpenAI({
             apiKey: this.apiKey,
         });
 
@@ -25,7 +24,7 @@ export class Deepseek_Prover_v2 implements ModelInterface {
                 systemPrompt: props.systemPrompt,
                 prompt: props.prompt,
                 extractedCode: props.extractedCode,
-                model: deepseek(this.name),
+                model: openai(this.name),
             });
 
             return { error: null, success: data.object };
