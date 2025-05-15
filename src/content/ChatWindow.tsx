@@ -15,6 +15,7 @@ import { PromptCard } from "@/components/PromptCard";
 import { DropDown } from "@/components/DropDown";
 import { ResponseRenderer } from "@/components/ResponseRenderer";
 import { SquareLoader } from "react-spinners";
+import { ValidModel } from "@/constants/valid_models";
 
 type ChatWindowProps = {
     code: string;
@@ -29,15 +30,13 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
         const [value, setValue] = useState<string>("");
         const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
         const [isLoading, setIsLoading] = useState<boolean>(false);
+        const [selectedModel, setSelectedModel] = useState<ValidModel | null>(null);
+        const [api, setApi] = useState<string | null>(null);
         const messageEndRef = useRef<HTMLDivElement>(null);
         const loaderRef = useRef<HTMLDivElement>(null);
 
         const { getSelectedModel, getkeyAndModel } = useChromeStorage();
 
-        /**
-         * Fetching chat history from IndexedDB
-         * and setting it to the state
-         */
         useEffect(() => {
             const fetchChatHistory = async () => {
                 const data = await getChatHistory(CHAT_HISTORY_KEY);
@@ -46,7 +45,21 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                 setChatHistory((prev) => [...prev, ...data]);
             };
 
+            const fetchModelAndKey = async () => {
+                const model = await getSelectedModel();
+                if (!model) {
+                    return;
+                }
+                const { apiKey } = await getkeyAndModel(model);
+                if (!apiKey) {
+                    return;
+                }
+                setSelectedModel(model);
+                setApi(apiKey);
+            };
+
             fetchChatHistory();
+            fetchModelAndKey();
         }, []);
 
         useEffect(() => {
@@ -57,19 +70,12 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
             saveChatHistory();
         }, [chatHistory]);
 
-        /**
-         * Handling the response from AI
-         */
         const handleAiResponse = async (): Promise<void> => {
-            const modelService = new ModelService();
-
-            const model = await getSelectedModel();
-            if (!model) {
+            if (!selectedModel || !api) {
                 return;
             }
-
-            const { apiKey } = await getkeyAndModel(model);
-            modelService.selectModel(apiKey, model);
+            const modelService = new ModelService();
+            modelService.selectModel(api, selectedModel);
 
             setIsLoading(true);
 
@@ -179,69 +185,86 @@ export const ChatWindow = forwardRef<HTMLTextAreaElement, ChatWindowProps>(
                                 <Maximize2 size={12} color="#262626" />
                             )}
                         </button>
-                        <DropDown clearChatHistory={clearChatHistory} />
+                        <DropDown clearChatHistory={clearChatHistory} apiKey={api} />
                     </div>
                 </nav>
 
-                {chatHistory.length === 0 && (
-                    <div className="prompt-card-container">
-                        <div className="demo-prompt-container">
-                            {cardContent.map((card) => (
-                                <PromptCard
-                                    icon={card.icon}
-                                    text={card.text}
-                                    lineClass={card.lineClass}
-                                    handleClick={handlePromptCardClick}
+                {selectedModel && api ? (
+                    <>
+                        {chatHistory.length === 0 && (
+                            <div className="prompt-card-container">
+                                <div className="demo-prompt-container">
+                                    {cardContent.map((card) => (
+                                        <PromptCard
+                                            icon={card.icon}
+                                            text={card.text}
+                                            lineClass={card.lineClass}
+                                            handleClick={handlePromptCardClick}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <section className="content-chat">
+                            {chatHistory &&
+                                chatHistory.map((chat, idx) => (
+                                    <article key={idx}>
+                                        {chat.role === "user" &&
+                                            typeof chat.content === "string" && (
+                                                <div className="user-chat-container">
+                                                    <div className="user-chat">
+                                                        <p>{chat.content}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        {chat.role === "assistant" &&
+                                            typeof chat.content === "object" && (
+                                                <ResponseRenderer
+                                                    feedback={chat.content.feedback}
+                                                    hints={chat.content.hints}
+                                                    snippet={chat.content.snippet}
+                                                />
+                                            )}
+                                    </article>
+                                ))}
+
+                            {isLoading && (
+                                <div className="loader-container" ref={loaderRef}>
+                                    <SquareLoader color="#2563eb" size={18} />
+                                    <p style={{ color: "#262626", fontSize: "12px" }}>
+                                        Thinking...
+                                    </p>
+                                </div>
+                            )}
+
+                            <div ref={messageEndRef} />
+                        </section>
+                        <form className="content-form" onSubmit={(e) => handleSubmit(e)}>
+                            <div className="textarea-container">
+                                <Textarea
+                                    ref={ref}
+                                    value={value}
+                                    onChange={(e) => setValue(e.target.value)}
+                                    placeholder="Ask for a Hint"
+                                    onKeyDown={handleEnterKeyPress}
                                 />
-                            ))}
-                        </div>
+                            </div>
+                            <button type="submit" className="content-send-btn">
+                                <SendHorizontal size={10} color="#f5f5f5" />
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    <div className="content-no-model">
+                        <h1 style={{ fontSize: "16px", fontWeight: "600", color: "#262626" }}>
+                            Please configure the extension
+                        </h1>
+                        <p>Go to the extension popup and select a model and enter your API key.</p>
                     </div>
                 )}
-
-                <section className="content-chat">
-                    {chatHistory &&
-                        chatHistory.map((chat, idx) => (
-                            <article key={idx}>
-                                {chat.role === "user" && typeof chat.content === "string" && (
-                                    <div className="user-chat-container">
-                                        <div className="user-chat">
-                                            <p>{chat.content}</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {chat.role === "assistant" && typeof chat.content === "object" && (
-                                    <ResponseRenderer
-                                        feedback={chat.content.feedback}
-                                        hints={chat.content.hints}
-                                        snippet={chat.content.snippet}
-                                    />
-                                )}
-                            </article>
-                        ))}
-
-                    {isLoading && (
-                        <div className="loader-container" ref={loaderRef}>
-                            <SquareLoader color="#2563eb" size={18} />
-                            <p style={{ color: "#262626", fontSize: "12px" }}>Thinking...</p>
-                        </div>
-                    )}
-
-                    <div ref={messageEndRef} />
-                </section>
-                <form className="content-form" onSubmit={(e) => handleSubmit(e)}>
-                    <div className="textarea-container">
-                        <Textarea
-                            ref={ref}
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            placeholder="Ask for a Hint"
-                            onKeyDown={handleEnterKeyPress}
-                        />
-                    </div>
-                    <button type="submit" className="content-send-btn">
-                        <SendHorizontal size={10} color="#f5f5f5" />
-                    </button>
-                </form>
+                <div className="blob-effect effect-1" />
+                <div className="blob-effect effect-2" />
             </div>
         );
     }

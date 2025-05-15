@@ -8,7 +8,7 @@ export const useChromeStorage = () => {
 
         getkeyAndModel: async (model: ValidModel) => {
             const result = await chrome.storage.local.get(model);
-            return { model: model, apiKey: result[model] };
+            return { model: model, apiKey: result[model] as string };
         },
 
         setSelectedModel: async (model: ValidModel) => {
