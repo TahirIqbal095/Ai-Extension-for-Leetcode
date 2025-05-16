@@ -5,10 +5,9 @@ import {
 } from "@/interface/ModalInterface";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObjectResponse } from "./utils";
-import { ValidModel } from "@/constants/valid_models";
 
 export class Gemini_2_0_flash implements ModelInterface {
-    name: ValidModel = "gemini-2.0-flash-001";
+    name: string = "gemini-2.0-flash-001";
     private apiKey: string = "";
 
     init(apiKey: string): void {
@@ -25,6 +24,7 @@ export class Gemini_2_0_flash implements ModelInterface {
                 extractedCode: props.extractedCode,
                 prompt: props.prompt,
                 model: google(this.name),
+                messages: props.messages,
             });
 
             return { error: null, success: data.object };

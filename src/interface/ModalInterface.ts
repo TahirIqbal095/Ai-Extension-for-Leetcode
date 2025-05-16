@@ -1,5 +1,6 @@
 import { outputSchema } from "@/schema/outputMode";
 import { z } from "zod";
+import { CoreMessage } from "ai";
 
 export abstract class ModelInterface {
     abstract name: string;
@@ -13,9 +14,7 @@ export abstract class ModelInterface {
      *  - `error`: Any error encountered during the API call.
      *  - `success`: The successful response data adhering to `outputSchema`.
      */
-    abstract generateResponse(
-        props: GenerateResponseParamsType
-    ): GenerateResponseReturnType;
+    abstract generateResponse(props: GenerateResponseParamsType): GenerateResponseReturnType;
 }
 
 /**
@@ -33,4 +32,5 @@ export type GenerateResponseParamsType = {
     prompt: string;
     systemPrompt: string;
     extractedCode?: string;
+    messages: CoreMessage[];
 };

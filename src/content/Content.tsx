@@ -57,7 +57,7 @@ export default function Content() {
                         prompt={prompt}
                         systemPrompt={systemPromptWithContext}
                         code={code}
-                        ref={textareaRef}
+                        open={open}
                     />
                 )}
 

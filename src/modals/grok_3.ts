@@ -26,6 +26,7 @@ export class Grok_3 implements ModelInterface {
                 prompt: props.prompt,
                 extractedCode: props.extractedCode,
                 model: xAi(this.name),
+                messages: props.messages,
             });
 
             return { error: null, success: data.object };

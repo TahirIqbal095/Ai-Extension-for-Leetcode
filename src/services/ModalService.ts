@@ -1,8 +1,5 @@
 import { ValidModel } from "@/constants/valid_models";
-import {
-    GenerateResponseParamsType,
-    ModelInterface,
-} from "@/interface/ModalInterface";
+import { GenerateResponseParamsType, ModelInterface } from "@/interface/ModalInterface";
 import { models } from "@/modals";
 import { outputSchema } from "@/schema/outputMode";
 import { z } from "zod";

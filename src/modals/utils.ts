@@ -1,16 +1,18 @@
 import { outputSchema } from "@/schema/outputMode";
-import { generateObject, GenerateObjectResult, LanguageModelV1 } from "ai";
+import { CoreMessage, generateObject, GenerateObjectResult, LanguageModelV1 } from "ai";
 
 export const generateObjectResponse = async ({
     systemPrompt,
     prompt,
     extractedCode,
     model,
+    messages,
 }: {
     systemPrompt: string;
     prompt: string;
     extractedCode?: string;
     model: LanguageModelV1;
+    messages: CoreMessage[];
 }): Promise<
     GenerateObjectResult<{
         feedback: string;
@@ -19,6 +21,7 @@ export const generateObjectResponse = async ({
         programmingLanguage?: string | undefined;
     }>
 > => {
+    console.log(messages);
     const data = await generateObject({
         schema: outputSchema,
         output: "object",
@@ -30,6 +33,7 @@ export const generateObjectResponse = async ({
                 content: `extractedCode (this code is writen by user): ${extractedCode}`,
             },
             { role: "user", content: prompt },
+            ...messages,
         ],
     });
 
