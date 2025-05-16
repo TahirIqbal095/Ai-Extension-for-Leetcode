@@ -21,7 +21,6 @@ export const generateObjectResponse = async ({
         programmingLanguage?: string | undefined;
     }>
 > => {
-    console.log(messages);
     const data = await generateObject({
         schema: outputSchema,
         output: "object",

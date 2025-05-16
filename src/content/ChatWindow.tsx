@@ -17,6 +17,7 @@ import { ResponseRenderer } from "@/components/ResponseRenderer";
 import { SquareLoader } from "react-spinners";
 import { ValidModel } from "@/constants/valid_models";
 import { CoreMessage } from "ai";
+import { testApi } from "@/utils/apiTest";
 
 type ChatWindowProps = {
     code: string;
@@ -86,10 +87,23 @@ export const ChatWindow = ({ setPrompt, prompt, systemPrompt, code, open }: Chat
         if (!selectedModel || !api) {
             return;
         }
+        setIsLoading(true);
+
+        const validApi = await testApi(api, selectedModel);
+        if (!validApi) {
+            const errMessage: ChatHistory = {
+                role: "assistant",
+                content: {
+                    feedback: "Invalid API, please check your API key.",
+                },
+            };
+            setChatHistory((prev) => [...prev, errMessage]);
+            setIsLoading(false);
+            return;
+        }
+
         const modelService = new ModelService();
         modelService.selectModel(api, selectedModel);
-
-        setIsLoading(true);
 
         console.log("parsed chat : ", parsedChat);
 
@@ -120,7 +134,9 @@ export const ChatWindow = ({ setPrompt, prompt, systemPrompt, code, open }: Chat
         if (error) {
             const errMessage: ChatHistory = {
                 role: "assistant",
-                content: "I couldn't get a response from the server. Please try again.",
+                content: {
+                    feedback: "Something went wrong, please try again.",
+                },
             };
 
             setChatHistory((prev) => [...prev, errMessage]);
