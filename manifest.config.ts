@@ -3,7 +3,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
 export default defineManifest({
     manifest_version: 3,
     version: "1.0.0",
-    name: "chrome extension for leetcode hints",
+    name: "LeetAid",
     description:
         "A chrome extension for leetcode to solve the problem by giving the tailored hints",
 
@@ -11,7 +11,7 @@ export default defineManifest({
         default_popup: "popup.html",
     },
 
-    permissions: ["storage", "activeTab", "scripting"],
+    permissions: ["storage"],
 
     icons: {
         "16": "icons/icon16.png",

@@ -9,7 +9,7 @@ type PromptCardProps = {
 
 export const PromptCard = ({ icon, text, lineClass, handleClick }: PromptCardProps) => {
     return (
-        <div className="promt-card">
+        <div className="prompt-card">
             <span className="prompt-card-click" onClick={(e) => handleClick(e, text)} />
             <div>{icon}</div>
             <p

@@ -94,7 +94,9 @@ export const ChatWindow = ({ setPrompt, prompt, systemPrompt, code, open }: Chat
             const errMessage: ChatHistory = {
                 role: "assistant",
                 content: {
-                    feedback: "Invalid API, please check your API key.",
+                    feedback: {
+                        response: "Invalid API, please check your API key.",
+                    },
                 },
             };
             setChatHistory((prev) => [...prev, errMessage]);
@@ -135,7 +137,9 @@ export const ChatWindow = ({ setPrompt, prompt, systemPrompt, code, open }: Chat
             const errMessage: ChatHistory = {
                 role: "assistant",
                 content: {
-                    feedback: "Something went wrong, please try again.",
+                    feedback: {
+                        response: "Something went wrong, please try again.",
+                    },
                 },
             };
 
