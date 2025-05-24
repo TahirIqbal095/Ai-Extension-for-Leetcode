@@ -5,7 +5,7 @@ export default defineManifest({
     version: "1.0.1",
     name: "LeetAid",
     description:
-        "LeetAid is a Chrome extension that provides AI-powered coding assistance for LeetCode problems. It offers personalized feedback, hints, and code snippets to help you improve your coding skills and solve problems more effectively.",
+        "LeetAid is a Chrome extension that provides AI-powered coding assistance for LeetCode problems.",
 
     action: {
         default_popup: "popup.html",
