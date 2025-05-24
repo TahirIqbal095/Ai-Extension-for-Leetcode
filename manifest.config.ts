@@ -2,10 +2,10 @@ import { defineManifest } from "@crxjs/vite-plugin";
 
 export default defineManifest({
     manifest_version: 3,
-    version: "1.0.0",
+    version: "1.0.1",
     name: "LeetAid",
     description:
-        "A chrome extension for leetcode to solve the problem by giving the tailored hints",
+        "LeetAid is a Chrome extension that provides AI-powered coding assistance for LeetCode problems. It offers personalized feedback, hints, and code snippets to help you improve your coding skills and solve problems more effectively.",
 
     action: {
         default_popup: "popup.html",
