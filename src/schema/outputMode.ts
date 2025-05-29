@@ -4,17 +4,6 @@ export const outputSchema = z.object({
     feedback: z
         .object({
             response: z.string().describe("The feedback response."),
-            links: z
-                .object({
-                    profile_picture: z
-                        .string()
-                        .optional()
-                        .describe("Link to the profile picture (e.g., GitHub avatar)."),
-                    github: z.string().optional().describe("Link to the GitHub profile"),
-                    linkedin: z.string().optional().describe("Link to the LinkedIn profile."),
-                })
-                .optional()
-                .describe("Links to the profile picture, GitHub, and LinkedIn."),
         })
         .describe(
             "The feedback is an object containing a response string. This is the main feedback from the AI. The response should be concise, personal, and directly address the user's prompt plus the context provided."
@@ -25,4 +14,14 @@ export const outputSchema = z.object({
         .optional()
         .describe("max 2 hints"),
     snippet: z.string().optional().describe("code snippet should be in format."),
+    links: z
+        .object({
+            profile_picture: z
+                .string()
+                .describe("Link to the profile picture (e.g., GitHub avatar)."),
+            github: z.string().describe("Link to the GitHub profile"),
+            linkedin: z.string().describe("Link to the LinkedIn profile."),
+        })
+        .optional()
+        .describe("Link to the profile picture, GitHub, and LinkedIn of a founder/creator."),
 });
